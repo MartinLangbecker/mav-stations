@@ -2,11 +2,16 @@
 
 A **collection of all stations of [MAV](https:/https://jegy.mav.hu/)**, requested from an endpoint at their website.
 
+[![npm version](https://img.shields.io/npm/v/db-stations.svg)](https://www.npmjs.com/package/db-stations)
+![ISC-licensed](https://img.shields.io/github/license/martinlangbecker/mav-stations.svg)
+
 ## Installing
 
 ```shell
 npm install mav-stations
 ```
+
+_Note:_ This Git repo does not contain the data, but the npm package does.
 
 ## Usage
 
