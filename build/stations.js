@@ -1,78 +1,42 @@
-import createDebug from 'debug'
-import qs from 'querystring'
-import createFetch from 'fetch-ponyfill'
-import concurrentThrough from 'through2-concurrent'
+import createDebug from 'debug';
+import createFetch from 'fetch-ponyfill';
+import through from 'through2';
 
-import {estimateStationWeight} from './estimate-station-weight.js'
+const { fetch } = createFetch();
+const debug = createDebug('mav-stations:stations');
 
-const {fetch} = createFetch()
-const debug = createDebug('db-stations:stations')
+const url =
+  'https://jegy-a.mav.hu/IK_API_PROD/api/OfferRequestApi/GetStationList';
 
-const endpoint = 'https://apis.deutschebahn.com/db-api-marketplace/apis/station-data/v2/stations'
+const request = () => {
+  debug('fetching stations');
 
-const request = (clientId, clientSecret) => {
-	debug('fetching stations')
+  return fetch(url, {
+    method: 'POST',
+    cache: 'no-store',
+  }).then((res) => {
+    if (!res.ok) {
+      const err = new Error('non-2xx response');
+      err.statusCode = res.status;
+      throw err;
+    }
+    return res.json();
+  });
+};
 
-	const url = endpoint + '?' + qs.stringify({
-		offset: 0, limit: 100000
-	})
-	return fetch(url, {
-		headers: {
-			'DB-Client-Id': clientId,
-			'DB-Api-Key': clientSecret,
-			accept: 'application/json'
-		},
-		cache: 'no-store'
-	})
-	.then((res) => {
-		if (!res.ok) {
-			const err = new Error('non-2xx response')
-			err.statusCode = res.status
-			throw err
-		}
-		return res.json()
-	})
-}
+const downloadStations = () => {
+  let stationsData = through.obj((s, _, cb) => {
+    cb(null, s);
+  });
 
-const maxIterations = 50
-const weight0Msg = `\
-has a weight of 0. Probably there are no departures here.`
+  request()
+    .then((data) => {
+      for (let res of data) stationsData.write(res);
+      stationsData.end();
+    })
+    .catch((err) => stationsData.destroy(err));
 
-const computeWeight = (s, _, cb) => {
-	const id = s.evaNumbers[0] && s.evaNumbers[0].number
-	if ('number' !== typeof id) return cb(null, s)
+  return stationsData;
+};
 
-	estimateStationWeight(id + '', maxIterations)
-	.then(weight => {
-		if (weight === 0) console.error(id + '', s.name, weight0Msg)
-		else {
-			debug(`estimated weight ${weight} for ${id}`)
-			s.weight = weight
-		}
-		cb(null, s)
-	})
-	.catch((err) => {
-		if (err.isHafasError) {
-			console.error(id + '', s.name, err.message || (err + ''))
-			cb()
-		} else cb(err)
-	})
-}
-
-const downloadAndWeightStations = (clientId, clientSecret, setLength) => {
-	const weight = concurrentThrough.obj({maxConcurrency: 10}, computeWeight)
-
-	request(clientId, clientSecret)
-	.then((data) => {
-		setLength(data.result.length)
-		for (let res of data.result) weight.write(res)
-		weight.end()
-	})
-	.catch(err => weight.destroy(err))
-
-	return weight
-}
-
-export {
-	downloadAndWeightStations,
-}
+export { downloadStations };

@@ -8,6 +8,6 @@ npm-debug.log
 /package-lock.json
 
 data.ndjson
-full.ndjson
 data.json
-full.json
+
+.prettierrc

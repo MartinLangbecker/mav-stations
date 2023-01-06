@@ -1,34 +1,21 @@
-const location = (data) => {
-	if (
-		data.evaNumbers &&
-		data.evaNumbers[0] &&
-		data.evaNumbers[0].geographicCoordinates &&
-		data.evaNumbers[0].geographicCoordinates.coordinates
-	) {
-		return {
-			type: 'location',
-			latitude: data.evaNumbers[0].geographicCoordinates.coordinates[1],
-			longitude: data.evaNumbers[0].geographicCoordinates.coordinates[0]
-		}
-	}
-	return null
-}
+import through from 'through2';
 
-const id = (data) => {
-	const eva = data.evaNumbers.find((eva) => eva.isMain)
-	if (eva) return eva.number + ''
-	if (data.evaNumbers[0]) return data.evaNumbers[0].number + ''
-	return null
-}
+const createParser = () => {
+  return through.obj((data, _, cb) => {
+    cb(null, {
+      type: 'station',
+      id: data.code,
+      name: data.name,
+      aliasNames: data.aliasNames,
+      baseCode: data.baseCode,
+      isInternational: data.isInternational,
+      canUseForOfferRequest: data.canUseForOfferRequest,
+      canUseForPassengerInformation: data.canUseForPessengerInformation,
+      country: data.country,
+      countryIso: data.coutryIso,
+      isIn108_1: data.isIn108_1,
+    });
+  });
+};
 
-const ril100 = (data) => {
-	const ids = data.ril100Identifiers.filter(id => !!id.rilIdentifier)
-	const id = ids.find(id => id.isMain) || ids[0]
-	return id && id.rilIdentifier || null
-}
-
-export {
-	location as parseLocation,
-	id as parseId,
-	ril100 as parseRil100,
-}
+export { createParser as parser };
