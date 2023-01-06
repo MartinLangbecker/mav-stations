@@ -1,6 +1,6 @@
 # mav-stations
 
-A **collection of all stations of [MAV](https:/https://jegy.mav.hu/)**, requested from an endpoint at their website.
+A **collection of all stations of [MAV](https:/https://jegy.mav.hu/)**, requested from an endpoint used by their website.
 
 [![npm version](https://img.shields.io/npm/v/db-stations.svg)](https://www.npmjs.com/package/db-stations)
 ![ISC-licensed](https://img.shields.io/github/license/martinlangbecker/mav-stations.svg)
@@ -30,7 +30,7 @@ for await (const station of readStations()) {
   type: 'station',
   id: '005510009', // EVA-like number
   name: 'BUDAPEST*',
-  aliasNames: ['Bp (BUDAPEST*)'] // if several names for the same station exist
+  aliasNames: ['Bp (BUDAPEST*)'], // if several names for the same station exist
   baseCode: '3638', // only available on hungarian stations
   isInternational: false, // true if international trains available (?)
   canUseForOfferRequest: true,
