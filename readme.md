@@ -2,7 +2,7 @@
 
 A **collection of all stations of [MAV](https:/https://jegy.mav.hu/)**, requested from an endpoint used by their website.
 
-[![npm version](https://img.shields.io/npm/v/db-stations.svg)](https://www.npmjs.com/package/db-stations)
+[![npm version](https://img.shields.io/npm/v/mav-stations.svg)](https://www.npmjs.com/package/mav-stations)
 ![ISC-licensed](https://img.shields.io/github/license/martinlangbecker/mav-stations.svg)
 
 ## Installing
