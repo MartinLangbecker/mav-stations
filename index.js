@@ -1,7 +1,7 @@
+import ndjson from 'ndjson';
+import { createReadStream } from 'node:fs';
 import { dirname, join as pathJoin } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { createReadStream } from 'node:fs';
-import ndjson from 'ndjson';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 

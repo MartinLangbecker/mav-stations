@@ -1,6 +1,8 @@
 # mav-stations
 
-A **collection of all stations of [MAV](https:/https://jegy.mav.hu/)**, requested from an endpoint used by their website.
+A **collection of all\* stations of [MAV](https:/https://jegy.mav.hu/)**, requested from an endpoint used by their website.
+
+(\* All stations that would appear when using the MAV website. This excludes internally used stations or sub-stations like "München Hbf Gl.5-10", id "008069685".)
 
 [![npm version](https://img.shields.io/npm/v/mav-stations.svg)](https://www.npmjs.com/package/mav-stations)
 ![ISC-licensed](https://img.shields.io/github/license/martinlangbecker/mav-stations.svg)
@@ -31,13 +33,13 @@ for await (const station of readStations()) {
   id: '005510009', // EVA-like number
   name: 'BUDAPEST*',
   aliasNames: ['Bp (BUDAPEST*)'], // if several names for the same station exist
-  baseCode: '3638', // only available on hungarian stations
+  baseCode: '3638', // only defined on hungarian stations
   isInternational: false, // true if international trains available (?)
   canUseForOfferRequest: true,
   canUseForPassengerInformation: false,
-  country: 'Magyarország',
+  country: 'Hungary',
   countryIso: 'HU',
-  isIn108_1: true
+  isIn108_1: true // apparently only true for select hungarian stations
 }
 // and a lot more…
 ```

@@ -1,8 +1,7 @@
-import { dirname } from 'node:path';
-import { fileURLToPath } from 'node:url';
-import { createReadStream, writeFile } from 'node:fs';
-import path from 'node:path';
 import ndjson from 'ndjson';
+import { createReadStream, writeFile } from 'node:fs';
+import path, { dirname } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import sink from 'stream-sink';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));

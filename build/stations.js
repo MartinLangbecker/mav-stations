@@ -16,7 +16,7 @@ const request = () => {
     cache: 'no-store',
   }).then((res) => {
     if (!res.ok) {
-      const err = new Error('non-2xx response');
+      const err = new Error(res.statusText);
       err.statusCode = res.status;
       throw err;
     }

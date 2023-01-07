@@ -1,52 +1,52 @@
 {
-	"name": "mav-stations",
-	"description": "A list of MAV stations.",
-	"version": "0.1.1",
-	"type": "module",
-	"main": "index.js",
-	"browser": "browser.js",
-	"files": [
-		"index.js",
-		"browser.js",
-		"create-filter.js",
-		"data.ndjson",
-		"data.json"
-	],
-	"keywords": [
-		"mav",
-		"hungarian railway",
-		"public transport",
-		"transit",
-		"stations",
-		"open data"
-	],
-	"author": "Martin Langbecker <martin.langbecker@gmail.com>",
-	"homepage": "https://github.com/martinlangbecker/mav-stations",
-	"repository": "martinlangbecker/mav-stations",
-	"bugs": "https://github.com/martinlangbecker/mav-stations/issues",
-	"license": "ISC",
-	"engines": {
-		"node": ">=19"
-	},
-	"dependencies": {
-		"ndjson": "^2.0.0",
-		"tokenize-db-station-name": "^3.0.0"
-	},
-	"devDependencies": {
-		"debug": "^4.1.1",
-		"eslint": "^8.0.1",
-		"fetch-ponyfill": "^7.1.0",
-		"from2": "2.3.0",
-		"pump": "^3.0.0",
-		"stream-sink": "^2.1.0",
-		"tap-min": "^2.0.0",
-		"tape": "^5.0.1",
-		"through2": "^4.0.2"
-	},
-	"scripts": {
-		"lint": "eslint .",
-		"build": "node build/index.js && node build/convert-to-browser.js",
-		"test": "node test.js | tap-min",
-		"prepublishOnly": "npm run lint && npm test"
-	}
+  "name": "mav-stations",
+  "description": "A list of MAV stations.",
+  "version": "0.2.0",
+  "type": "module",
+  "main": "index.js",
+  "browser": "browser.js",
+  "files": [
+    "index.js",
+    "browser.js",
+    "create-filter.js",
+    "data.ndjson",
+    "data.json"
+  ],
+  "keywords": [
+    "mav",
+    "hungarian railway",
+    "public transport",
+    "transit",
+    "stations",
+    "open data"
+  ],
+  "author": "Martin Langbecker <martin.langbecker@gmail.com>",
+  "homepage": "https://github.com/martinlangbecker/mav-stations",
+  "repository": "martinlangbecker/mav-stations",
+  "bugs": "https://github.com/martinlangbecker/mav-stations/issues",
+  "license": "ISC",
+  "engines": {
+    "node": ">=19"
+  },
+  "dependencies": {
+    "ndjson": "^2.0.0",
+    "tokenize-db-station-name": "^3.0.0"
+  },
+  "devDependencies": {
+    "debug": "^4.1.1",
+    "eslint": "^8.0.1",
+    "fetch-ponyfill": "^7.1.0",
+    "from2": "2.3.0",
+    "pump": "^3.0.0",
+    "stream-sink": "^2.1.0",
+    "tap-min": "^2.0.0",
+    "tape": "^5.0.1",
+    "through2": "^4.0.2"
+  },
+  "scripts": {
+    "lint": "eslint .",
+    "build": "node build/index.js && node build/convert-to-browser.js",
+    "test": "node test.js | tap-min",
+    "prepublishOnly": "npm run lint && npm test"
+  }
 }

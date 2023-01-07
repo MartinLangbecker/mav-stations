@@ -65,7 +65,15 @@ const assertIsBerlinHbf = (t, s) => {
     s.id === '008065969' || s.id === '008031922',
     'id is 008065969 or 008031922'
   );
-  t.ok(s.name.startsWith('Berlin Hbf'));
+  t.ok(s.name.startsWith('Berlin Hbf'), 'name starts with "Berlin Hbf"');
+  t.ok(s.isInternational, 'has international connections');
+  t.ok(s.canUseForOfferRequest, 'can be used to request offers');
+  t.ok(
+    s.canUseForPassengerInformation,
+    'can be used to request passenger information'
+  );
+  t.equal(s.country, 'Germany', 'country is Germany');
+  t.equal(s.countryIso, 'DE', 'country ISO code is "DE"');
 };
 
 test('data.ndjson contains valid simplified stations', (t) => {
