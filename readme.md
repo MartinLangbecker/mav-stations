@@ -1,6 +1,6 @@
 # mav-stations
 
-A **collection of all\* stations of [MAV](https:/https://jegy.mav.hu/)**, requested from an endpoint used by their website.
+A **collection of all\* stations of [MAV](https://jegy.mav.hu/)**, requested from an endpoint used by their website.
 
 _(\* All stations that would appear when using the MAV website. This excludes internally used stations or sub-stations like `"München Hbf Gl.5-10"` with ID `"008069685"`.)_
 
