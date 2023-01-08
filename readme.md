@@ -2,7 +2,7 @@
 
 A **collection of all\* stations of [MAV](https:/https://jegy.mav.hu/)**, requested from an endpoint used by their website.
 
-(\* All stations that would appear when using the MAV website. This excludes internally used stations or sub-stations like "München Hbf Gl.5-10", id "008069685".)
+_(\* All stations that would appear when using the MAV website. This excludes internally used stations or sub-stations like `"München Hbf Gl.5-10"` with ID `"008069685"`.)_
 
 [![npm version](https://img.shields.io/npm/v/mav-stations.svg)](https://www.npmjs.com/package/mav-stations)
 ![ISC-licensed](https://img.shields.io/github/license/martinlangbecker/mav-stations.svg)
@@ -17,7 +17,7 @@ _Note:_ This Git repo does not contain the data, but the npm package does.
 
 ## Usage
 
-`readStations()` returns a [readable stream](https://nodejs.org/api/stream.html#stream_class_stream_readable) in [object mode](https://nodejs.org/api/stream.html#stream_object_mode), emitting [_Friendly Public Transport Format_](https://github.com/public-transport/friendly-public-transport-format) `station` objects.
+`readStations()` returns a [readable stream](https://nodejs.org/api/stream.html#readable-streams) in [object mode](https://nodejs.org/api/stream.html#object-mode), emitting [_Friendly Public Transport Format_](https://github.com/public-transport/friendly-public-transport-format) `station` objects.
 
 ```js
 import { readStations } from 'mav-stations';
