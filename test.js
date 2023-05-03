@@ -58,6 +58,10 @@ const assertIsValidStation = (t, s, row) => {
   if (s.isIn108_1 !== null) {
     t.equal(typeof s.isIn108_1, 'boolean', `row ${row}: s.isIn108_1`);
   }
+
+  if (s.transportMode !== null) {
+    t.equal(typeof s.transportMode, 'object', `row ${row}: s.transportMode`);
+  }
 };
 
 const assertIsBerlinHbf = (t, s) => {
