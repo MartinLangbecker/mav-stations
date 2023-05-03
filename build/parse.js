@@ -6,6 +6,7 @@ const countries = {
   Dánia: 'Denmark',
   Hollandia: 'Netherlands',
   Horvátország: 'Croatia',
+  Olaszország: 'Italy',
   Lengyelország: 'Poland',
   Luxemburg: 'Luxembourg',
   Magyarország: 'Hungary',
@@ -16,6 +17,20 @@ const countries = {
   Szlovákia: 'Slovakia',
   Szlovénia: 'Slovenia',
   Ukrajna: 'Ukraine',
+};
+
+const transportModes = {
+  100: {
+    code: 100,
+    name: 'Rail',
+    description: 'Rail. Used for intercity or long-distance travel.',
+  },
+  109: { code: 109, name: 'Suburban Railway', description: 'Suburban Railway' },
+  200: {
+    code: 200,
+    name: 'Bus',
+    description: 'Bus. Used for short- and long-distance bus routes.',
+  },
 };
 
 const createParser = () => {
@@ -32,6 +47,9 @@ const createParser = () => {
       country: countries[data.country] ?? data.country,
       countryIso: data.coutryIso,
       isIn108_1: data.isIn108_1,
+      transportMode: data.modalities?.length
+        ? transportModes[data.modalities[0].code]
+        : data.modalities,
     });
   });
 };

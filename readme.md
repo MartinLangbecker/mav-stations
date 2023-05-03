@@ -1,6 +1,6 @@
 # mav-stations
 
-A **collection of all\* stations of [MAV](https://jegy.mav.hu/)**, requested from an endpoint used by their website.
+A **collection of all\* stations of [Magyar Államvasutak](https://jegy.mav.hu/) (MÁV, Hungarian State Railways)**, requested from an endpoint used by their website.
 
 _(\* All stations that would appear when using the MAV website. This excludes internally used stations or sub-stations like `"München Hbf Gl.5-10"` with ID `"008069685"`.)_
 
@@ -33,13 +33,14 @@ for await (const station of readStations()) {
   id: '005510009', // EVA-like number
   name: 'BUDAPEST*',
   aliasNames: ['Bp (BUDAPEST*)'], // if several names for the same station exist
-  baseCode: '3638', // only defined on hungarian stations
+  baseCode: '3638', // only defined on Hungarian stations
   isInternational: false, // true if international trains available (?)
   canUseForOfferRequest: true,
   canUseForPassengerInformation: false,
   country: 'Hungary',
   countryIso: 'HU',
-  isIn108_1: true // apparently only true for select hungarian stations
+  isIn108_1: true, // apparently only true for select Hungarian stations; "internationalCapable"
+  transportMode: {"code": 100,"name": "Rail", "description": "Rail. Used for intercity or long-distance travel."}
 }
 // and a lot more…
 ```

@@ -16,6 +16,7 @@ const showError = (err) => {
   process.exit(1);
 };
 
+// download station data
 const stations = getStations();
 
 let aliasNames = new Map();
@@ -24,12 +25,14 @@ const noAliases = pump(
   stations,
   through.obj((s, _, cb) => {
     if (!s.isAlias) {
+      // if station name is not an alias, do nothing
       cb(null, s);
     } else {
-      // separate alias entries (same code, different name)
+      // save alias entries (same code, different name) in map
       let arr = aliasNames.get(s.code) ?? [];
       arr.push(s.name);
       aliasNames.set(s.code, arr);
+      // discard alias entry
       cb();
     }
   }),
@@ -39,6 +42,7 @@ const noAliases = pump(
 const src = pump(
   noAliases,
   through.obj((s, _, cb) => {
+    // set field aliasNames to value from map generated in previous step
     s.aliasNames = aliasNames.get(s.code) ?? [];
     cb(null, s);
   }),
