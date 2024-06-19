@@ -5,8 +5,8 @@ import { fileURLToPath } from 'node:url';
 import pump from 'pump';
 import through from 'through2';
 
-import { parser as parse } from './parse.js';
-import { downloadStations as getStations } from './stations.js';
+import { parse } from './parse.js';
+import { downloadStations } from './stations.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
@@ -17,40 +17,39 @@ const showError = (err) => {
 };
 
 // download station data
-const stations = getStations();
+const stations = downloadStations();
+const aliasNames = new Map();
 
-let aliasNames = new Map();
-
-const noAliases = pump(
+const stationsWithoutAliases = pump(
   stations,
-  through.obj((s, _, cb) => {
-    if (!s.isAlias) {
+  through.obj((station, _, cb) => {
+    if (!station.isAlias) {
       // if station name is not an alias, do nothing
-      cb(null, s);
+      cb(null, station);
     } else {
       // save alias entries (same code, different name) in map
-      let arr = aliasNames.get(s.code) ?? [];
-      arr.push(s.name);
-      aliasNames.set(s.code, arr);
-      // discard alias entry
+      let aliases = aliasNames.get(station.code) ?? [];
+      aliases.push(station.name);
+      aliasNames.set(station.code, aliases);
+      // discard alias station entry
       cb();
     }
   }),
   showError
 );
 
-const src = pump(
-  noAliases,
-  through.obj((s, _, cb) => {
+const stationsWithAliases = pump(
+  stationsWithoutAliases,
+  through.obj((station, _, cb) => {
     // set field aliasNames to value from map generated in previous step
-    s.aliasNames = aliasNames.get(s.code) ?? [];
-    cb(null, s);
+    station.aliasNames = aliasNames.get(station.code) ?? [];
+    cb(null, station);
   }),
   showError
 );
 
 pump(
-  src,
+  stationsWithAliases,
   parse(),
   ndjson.stringify(),
   fs.createWriteStream(pathJoin(__dirname, '../data.ndjson')),

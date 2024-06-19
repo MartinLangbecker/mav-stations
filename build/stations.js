@@ -14,29 +14,27 @@ const request = () => {
   return fetch(url, {
     method: 'POST',
     cache: 'no-store',
-  }).then((res) => {
-    if (!res.ok) {
-      const err = new Error(res.statusText);
-      err.statusCode = res.status;
-      throw err;
+  }).then((result) => {
+    if (!result.ok) {
+      const error = new Error(result.statusText);
+      error.statusCode = result.status;
+      throw error;
     }
-    return res.json();
+    return result.json();
   });
 };
 
-const downloadStations = () => {
-  let stationsData = through.obj((s, _, cb) => {
-    cb(null, s);
+export const downloadStations = () => {
+  let stations = through.obj((station, _, cb) => {
+    cb(null, station);
   });
 
   request()
     .then((data) => {
-      for (let res of data) stationsData.write(res);
-      stationsData.end();
+      for (let station of data) stations.write(station);
+      stations.end();
     })
-    .catch((err) => stationsData.destroy(err));
+    .catch((err) => stations.destroy(err));
 
-  return stationsData;
+  return stations;
 };
-
-export { downloadStations };

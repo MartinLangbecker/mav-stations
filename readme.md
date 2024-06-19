@@ -47,8 +47,6 @@ for await (const station of readStations()) {
 
 ## Related
 
-<!-- - [`mav-stations-autocomplete`](https://github.com/martinlangbecker/mav-stations-autocomplete#mav-stations-autocomplete) – Search for stations of MAV (data from MAV station API). -->
-
 - [`db-stations`](https://github.com/derhuerst/db-stations#db-stations) – A list of DB stations (data from DB station API).
 - [`db-stations-autocomplete`](https://github.com/derhuerst/db-stations-autocomplete#db-stations-autocomplete) – Search for stations of DB (data from DB station API).
 - [`db-hafas-stations`](https://github.com/derhuerst/db-hafas-stations#db-hafas-stations) – A list of DB stations, taken from HAFAS.

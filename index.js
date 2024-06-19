@@ -10,11 +10,10 @@ const read = (file) => {
   const parser = ndjson.parse();
   raw.pipe(parser);
   raw.on('error', (err) => parser.emit('error', err));
+
   return parser;
 };
 
-const readStations = () => {
+export const readStations = () => {
   return read(pathJoin(__dirname, 'data.ndjson'));
 };
-
-export { readStations };

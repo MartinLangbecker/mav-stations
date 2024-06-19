@@ -27,7 +27,7 @@ const showError = (err) => {
   process.exit(1);
 };
 
-const d = path.join(__dirname, '..');
-ndjsonToJSON(path.join(d, 'data.ndjson'), path.join(d, 'data.json')).catch(
+const dir = path.join(__dirname, '..');
+ndjsonToJSON(path.join(dir, 'data.ndjson'), path.join(dir, 'data.json')).catch(
   showError
 );

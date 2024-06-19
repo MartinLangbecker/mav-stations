@@ -1,7 +1,7 @@
 {
   "name": "mav-stations",
   "description": "A list of MAV stations.",
-  "version": "0.3.1",
+  "version": "0.3.2",
   "type": "module",
   "main": "index.js",
   "browser": "browser.js",
@@ -33,20 +33,21 @@
     "tokenize-db-station-name": "^3.0.0"
   },
   "devDependencies": {
-    "debug": "^4.1.1",
-    "eslint": "^8.0.1",
+    "debug": "^4.3.5",
+    "depcheck": "^1.4.7",
+    "eslint": "^8.57.0",
     "fetch-ponyfill": "^7.1.0",
-    "from2": "2.3.0",
     "pump": "^3.0.0",
-    "stream-sink": "^2.1.0",
-    "tap-min": "^2.0.0",
-    "tape": "^5.0.1",
+    "stream-sink": "^2.2.2",
+    "tap-min": "^3.0.0",
+    "tape": "^5.8.1",
     "through2": "^4.0.2"
   },
   "scripts": {
+    "check-deps": "depcheck",
     "lint": "eslint .",
     "build": "node build/index.js && node build/convert-to-browser.js",
     "test": "node test.js | tap-min",
-    "prepublishOnly": "npm run lint && npm test"
+    "prepublishOnly": "npm run lint && npm run check-deps  && npm test"
   }
 }

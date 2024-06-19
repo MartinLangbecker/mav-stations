@@ -33,7 +33,7 @@ const transportModes = {
   },
 };
 
-const createParser = () => {
+export const parse = () => {
   return through.obj((data, _, cb) => {
     cb(null, {
       type: 'station',
@@ -43,7 +43,7 @@ const createParser = () => {
       baseCode: data.baseCode,
       isInternational: data.isInternational,
       canUseForOfferRequest: data.canUseForOfferRequest,
-      canUseForPassengerInformation: data.canUseForPessengerInformation,
+      canUseForPassengerInformation: data.canUseForPassengerInformation,
       country: countries[data.country] ?? data.country,
       countryIso: data.coutryIso,
       isIn108_1: data.isIn108_1,
@@ -53,5 +53,3 @@ const createParser = () => {
     });
   });
 };
-
-export { createParser as parser };
