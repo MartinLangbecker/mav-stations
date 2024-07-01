@@ -13,7 +13,11 @@ _(\* All stations that would appear when using the MAV website. This excludes in
 npm install mav-stations
 ```
 
-_Note:_ This Git repo does not contain the data, but the npm package does.
+_Note:_ This Git repo does not contain the actual data, but the npm package does. To retrieve station data, run:
+
+```shell
+npm run build
+```
 
 ## Usage
 
@@ -30,10 +34,10 @@ for await (const station of readStations()) {
 ```js
 {
   type: 'station',
-  id: '005510009', // EVA-like number
+  id: '005510009', // station ID, used throughout booking system
   name: 'BUDAPEST*',
-  aliasNames: ['Bp (BUDAPEST*)'], // if several names for the same station exist
-  baseCode: '3638', // only defined on Hungarian stations
+  aliasNames: ['Bp (BUDAPEST*)'], // if several names for the same station exist, otherwise empty list
+  baseCode: '3638', // only defined on Hungarian stations, meaning unclear
   isInternational: false, // true if international trains available (?)
   canUseForOfferRequest: true,
   canUseForPassengerInformation: false,
