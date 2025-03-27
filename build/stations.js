@@ -13,7 +13,8 @@ const request = () => {
 
   return fetch(url, {
     method: 'POST',
-    cache: 'no-store',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ 'cacheHash': '' })
   }).then((result) => {
     if (!result.ok) {
       const error = new Error(result.statusText);
@@ -31,7 +32,7 @@ export const downloadStations = () => {
 
   request()
     .then((data) => {
-      for (let station of data) stations.write(station);
+      for (let station of data.stations) stations.write(station);
       stations.end();
     })
     .catch((err) => stations.destroy(err));

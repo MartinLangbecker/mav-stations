@@ -9,3 +9,4 @@ data.ndjson
 data.json
 
 .prettierrc
+.idea
