@@ -35,7 +35,7 @@ const stationsWithoutAliases = pump(
       cb();
     }
   }),
-  showError
+  showError,
 );
 
 const stationsWithAliases = pump(
@@ -45,7 +45,7 @@ const stationsWithAliases = pump(
     station.aliasNames = aliasNames.get(station.code) ?? [];
     cb(null, station);
   }),
-  showError
+  showError,
 );
 
 pump(
@@ -53,5 +53,5 @@ pump(
   parse(),
   ndjson.stringify(),
   fs.createWriteStream(pathJoin(__dirname, '../data.ndjson')),
-  showError
+  showError,
 );

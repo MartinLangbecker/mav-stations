@@ -14,7 +14,7 @@ const request = () => {
   return fetch(url, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ 'cacheHash': '' })
+    body: JSON.stringify({ cacheHash: '' }),
   }).then((result) => {
     if (!result.ok) {
       const error = new Error(result.statusText);

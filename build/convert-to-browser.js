@@ -18,7 +18,7 @@ const ndjsonToJSON = (src, dest) => {
             if (err) reject(err);
             else resolve();
           });
-        })
+        }),
     );
 };
 
@@ -29,5 +29,5 @@ const showError = (err) => {
 
 const dir = path.join(__dirname, '..');
 ndjsonToJSON(path.join(dir, 'data.ndjson'), path.join(dir, 'data.json')).catch(
-  showError
+  showError,
 );

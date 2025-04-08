@@ -25,7 +25,7 @@ const assertIsValidStation = (test, station, row) => {
     test.equal(
       typeof station.isInternational,
       'boolean',
-      `row ${row}: s.isInternational`
+      `row ${row}: s.isInternational`,
     );
   }
 
@@ -33,7 +33,7 @@ const assertIsValidStation = (test, station, row) => {
     test.equal(
       typeof station.canUseForOfferRequest,
       'boolean',
-      `row ${row}: s.canUseForOfferRequest`
+      `row ${row}: s.canUseForOfferRequest`,
     );
   }
 
@@ -41,7 +41,7 @@ const assertIsValidStation = (test, station, row) => {
     test.equal(
       typeof station.canUseForPassengerInformation,
       'boolean',
-      `row ${row}: s.canUseForPassengerInformation`
+      `row ${row}: s.canUseForPassengerInformation`,
     );
   }
 
@@ -60,21 +60,28 @@ const assertIsValidStation = (test, station, row) => {
   }
 
   if (station.transportMode !== null) {
-    test.equal(typeof station.transportMode, 'object', `row ${row}: s.transportMode`);
+    test.equal(
+      typeof station.transportMode,
+      'object',
+      `row ${row}: s.transportMode`,
+    );
   }
 };
 
 const assertIsBerlinHbf = (test, station) => {
   test.ok(
     station.id === '008065969' || station.id === '008031922',
-    'id is 008065969 or 008031922'
+    'id is 008065969 or 008031922',
   );
-  test.ok(station.name.startsWith('Berlin Hbf'), 'name starts with "Berlin Hbf"');
+  test.ok(
+    station.name.startsWith('Berlin Hbf'),
+    'name starts with "Berlin Hbf"',
+  );
   test.ok(station.isInternational, 'has international connections');
   test.ok(station.canUseForOfferRequest, 'can be used to request offers');
   test.ok(
     station.canUseForPassengerInformation,
-    'can be used to request passenger information'
+    'can be used to request passenger information',
   );
   test.equal(station.country, 'Germany', 'country is Germany');
   test.equal(station.countryIso, 'DE', 'country ISO code is "DE"');

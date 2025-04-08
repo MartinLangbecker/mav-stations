@@ -17,7 +17,7 @@ const arrayAsReadable = (array) => {
       for (; i <= maxI; i++) {
         this.push(array[i]);
       }
-      if (i === (length - 1)) this.push(null); // end
+      if (i === length - 1) this.push(null); // end
     },
   });
 };
