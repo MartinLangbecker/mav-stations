@@ -1,7 +1,7 @@
 {
   "name": "mav-stations",
   "description": "A list of MAV stations.",
-  "version": "0.3.3",
+  "version": "0.3.4",
   "type": "module",
   "main": "index.js",
   "browser": "browser.js",
@@ -36,14 +36,14 @@
     "tokenize-db-station-name": "^3.0.0"
   },
   "devDependencies": {
-    "debug": "^4.3.5",
+    "debug": "^4.4.0",
     "depcheck": "^1.4.7",
-    "eslint": "^8.57.0",
+    "eslint": "^9.24.0",
     "fetch-ponyfill": "^7.1.0",
-    "pump": "^3.0.0",
+    "pump": "^3.0.2",
     "stream-sink": "^2.2.2",
     "tap-min": "^3.0.0",
-    "tape": "^5.8.1",
+    "tape": "^5.9.0",
     "through2": "^4.0.2"
   },
   "scripts": {

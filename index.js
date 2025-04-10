@@ -14,6 +14,4 @@ const read = (file) => {
   return parser;
 };
 
-export const readStations = () => {
-  return read(pathJoin(__dirname, 'data.ndjson'));
-};
+export const readStations = () => read(pathJoin(__dirname, 'data.ndjson'));
