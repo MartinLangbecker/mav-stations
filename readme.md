@@ -21,7 +21,7 @@ npm run build
 
 ## Usage
 
-`readStations()` returns a [readable stream](https://nodejs.org/api/stream.html#readable-streams) in [object mode](https://nodejs.org/api/stream.html#object-mode), emitting [_Friendly Public Transport Format_](https://github.com/public-transport/friendly-public-transport-format) `station` objects.
+`readStations()` returns an [async iterable](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Iteration_protocols#the_async_iterator_and_async_iterable_protocols) of [_Friendly Public Transport Format_](https://github.com/public-transport/friendly-public-transport-format) `station` objects.
 
 ```js
 import { readStations } from 'mav-stations';

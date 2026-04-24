@@ -87,29 +87,21 @@ const assertIsBerlinHbf = (test, station) => {
   test.equal(station.countryIso, 'DE', 'country ISO code is "DE"');
 };
 
-test('data.ndjson contains valid simplified stations', (test) => {
+test('data.ndjson contains valid simplified stations', async (test) => {
   let row = 0;
-  stations()
-    .on('error', test.ifError)
-    .on('data', (station) => {
-      assertIsValidStation(test, station, ++row);
-    })
-    .on('end', () => {
-      test.end();
-    });
+  for await (const station of stations()) {
+    assertIsValidStation(test, station, ++row);
+  }
+  test.end();
 });
 
-test('data.ndjson contains Berlin Hauptbahnhof', (test) => {
-  stations()
-    .on('error', test.ifError)
-    .on('data', (station) => {
-      if (station.id === '008065969' || station.id === '008031922') {
-        assertIsBerlinHbf(test, station);
-      }
-    })
-    .on('end', () => {
-      test.end();
-    });
+test('data.ndjson contains Berlin Hauptbahnhof', async (test) => {
+  for await (const station of stations()) {
+    if (station.id === '008065969' || station.id === '008031922') {
+      assertIsBerlinHbf(test, station);
+    }
+  }
+  test.end();
 });
 
 test('createFilter works properly', (test) => {

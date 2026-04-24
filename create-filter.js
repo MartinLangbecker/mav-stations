@@ -9,21 +9,13 @@ export const createFilter = (selector) => {
   const selectorTokens =
     'string' === typeof selector.name ? tokenize(selector.name) : [];
 
-  return (s) => {
-    const sTokens = tokenize(s.name);
-    for (const prop of props) {
+  return (station) => {
+    const stationTokens = tokenize(station.name);
+    return props.every((prop) => {
       if (prop === 'name') {
-        // check if selectorTokens is a subset of sTokens
-        for (const selectorToken of selectorTokens) {
-          if (sTokens.indexOf(selectorToken) < 0) {
-            return false;
-          }
-        }
-      } else if (s[prop] !== selector[prop]) {
-        return false;
+        return selectorTokens.every((token) => stationTokens.includes(token));
       }
-    }
-
-    return true;
+      return station[prop] === selector[prop];
+    });
   };
 };

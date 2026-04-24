@@ -1,5 +1,3 @@
-import through from 'through2';
-
 const countries = {
   Ausztria: 'Austria',
   Csehország: 'Czechia',
@@ -33,23 +31,20 @@ const transportModes = {
   },
 };
 
-export const parse = () => {
-  return through.obj((data, _, cb) => {
-    cb(null, {
-      type: 'station',
-      id: data.code,
-      name: data.name,
-      aliasNames: data.aliasNames,
-      baseCode: data.baseCode,
-      isInternational: data.isInternational,
-      canUseForOfferRequest: data.canUseForOfferRequest,
-      canUseForPassengerInformation: data.canUseForPassengerInformation,
-      country: countries[data.country] ?? data.country,
-      countryIso: data.coutryIso,
-      isIn108_1: data.isIn108_1,
-      transportMode: data.modalities?.length
-        ? transportModes[data.modalities[0].code]
-        : data.modalities,
-    });
-  });
-};
+export const parseStation = (data) => ({
+  type: 'station',
+  id: data.code,
+  name: data.name,
+  aliasNames: data.aliasNames,
+  baseCode: data.baseCode,
+  isInternational: data.isInternational,
+  canUseForOfferRequest: data.canUseForOfferRequest,
+  canUseForPassengerInformation: data.canUseForPassengerInformation,
+  country: countries[data.country] ?? data.country,
+  // "coutryIso" is a typo in the MÁV API response — not a bug in this code
+  countryIso: data.coutryIso,
+  isIn108_1: data.isIn108_1,
+  transportMode: data.modalities?.length
+    ? transportModes[data.modalities[0].code]
+    : data.modalities,
+});
