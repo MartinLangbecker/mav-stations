@@ -1,7 +1,7 @@
 {
   "name": "mav-stations",
   "description": "A list of MAV stations.",
-  "version": "0.3.5",
+  "version": "0.4.0",
   "type": "module",
   "main": "index.js",
   "browser": "browser.js",
@@ -47,6 +47,9 @@
     "lint": "eslint .",
     "build": "node build/index.js",
     "test": "node test.js | tap-min",
+    "discover": "node crawler/discover-stations.js",
+    "geocode": "node geocode/wikidata-geocode.js",
+    "geocode:map": "node geocode/wikidata-geocode.js --map-only",
     "prepublishOnly": "npm run lint && npm run check-deps && npm test"
   }
 }

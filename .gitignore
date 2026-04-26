@@ -9,3 +9,15 @@ data.ndjson
 data.json
 
 .idea
+
+# geocode artifacts (regenerable)
+geocode/*
+!geocode/wikidata-geocode.js
+!geocode/geocode-overrides.json
+
+# crawler state (regenerable)
+crawler/*
+!crawler/discover-stations.js
+!crawler/discovered-stations.json
+
+update-bookmarklet.js

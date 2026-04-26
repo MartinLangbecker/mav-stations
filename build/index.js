@@ -19,12 +19,25 @@ for (const station of raw) {
 }
 
 // build parsed stations, attaching aliases
+const officialCodes = new Set();
 const stations = raw
   .filter((station) => !station.isAlias)
   .map((station) => {
     station.aliasNames = aliasNames.get(station.code) ?? [];
+    officialCodes.add(station.code);
     return parseStation(station);
   });
+
+// merge discovered stations not already in the official list
+const discoveredPath = pathJoin(__dirname, '../crawler/discovered-stations.json');
+if (fs.existsSync(discoveredPath)) {
+  const discovered = JSON.parse(fs.readFileSync(discoveredPath, 'utf-8'));
+  for (const station of discovered) {
+    if (!officialCodes.has(station.code)) {
+      stations.push(parseStation(station));
+    }
+  }
+}
 
 const ndjson = stations.map((station) => JSON.stringify(station)).join('\n') + '\n';
 const json = JSON.stringify(stations);
