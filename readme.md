@@ -7,7 +7,7 @@ A **collection of all stations of [Magyar Államvasutak](https://jegy.mav.hu/) (
 
 ## Coverage
 
-**10,500+ rail stations** across **23 countries**. The [interactive station map](european-stations-map.html) shows all geocoded stations, color-coded by source (official MAV list vs. discovered via timetable crawl).
+**12,000+ rail stations** across **23 countries**. The [interactive station map](european-stations-map.html) shows all geocoded stations, color-coded by source (official MAV list vs. discovered via timetable crawl).
 
 > **Note:** Station discovery is an ongoing process. The dataset grows with each crawl and may not yet cover all stations reachable through the MÁV timetable, particularly in countries far from Hungary.
 
