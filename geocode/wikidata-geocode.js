@@ -217,6 +217,33 @@ const queryByCountry = async (countryQid) => {
 	}).filter(Boolean);
 };
 
+// --- Overpass API query ---
+const OVERPASS_COUNTRIES = new Set(['PL','HU','RS','RO','SI','SK','HR','DE','AT','UA','FR','CZ','IT','NL','BE','CH','DK','BG','ME','MD','LT','GB','LU']);
+const OVERPASS_DELAY = 3000;
+
+const queryOverpass = async (countryIso) => {
+	const query = `[out:json];area["ISO3166-1"="${countryIso}"]->.c;node["railway"~"station|halt"](area.c);out;`;
+	for (let attempt = 0; attempt < 3; attempt++) {
+		const res = await fetch('https://overpass-api.de/api/interpreter', {
+			method: 'POST',
+			headers: { 'Content-Type': 'application/x-www-form-urlencoded', 'User-Agent': 'mav-stations-geocoder/1.0' },
+			body: 'data=' + encodeURIComponent(query),
+			signal: AbortSignal.timeout(120000),
+		});
+		if (res.status === 429) {
+			console.error(`\n  Overpass 429, backing off 20s (attempt ${attempt + 1}/3)`);
+			await sleep(20000);
+			continue;
+		}
+		if (!res.ok) throw new Error(`Overpass ${res.status}: ${res.statusText}`);
+		const data = await res.json();
+		return data.elements.filter(e => e.tags?.name).map(e => ({
+			lat: e.lat, lon: e.lon, labels: [e.tags.name, ...(e.tags['name:en'] ? [e.tags['name:en']] : [])],
+		}));
+	}
+	throw new Error(`Overpass failed after 3 retries for ${countryIso}`);
+};
+
 // --- Generate map HTML ---
 const generateMap = (stations) => {
 	const mav = stations.filter(s => s.source === 'mav');
@@ -392,6 +419,45 @@ const main = async () => {
 				await sleep(BATCH_DELAY);
 			}
 			console.log(`\n  Done: ${nameFound} found, ${nameMissed} missed. Cache: ${Object.keys(cache).length}`);
+			await safeWrite(CACHE_FILE, JSON.stringify(cache, null, 2));
+		}
+
+		// Overpass API fallback for remaining misses
+		const overpassMissing = {};
+		for (const [code, s] of allStations) {
+			if (!cache[code] && s.country && !s.name.includes('*') && OVERPASS_COUNTRIES.has(s.country)) {
+				(overpassMissing[s.country] ??= []).push([code, s]);
+			}
+		}
+		const overpassCountries = Object.entries(overpassMissing).sort((a, b) => b[1].length - a[1].length);
+		const totalOverpass = overpassCountries.reduce((s, [, arr]) => s + arr.length, 0);
+
+		if (totalOverpass > 0) {
+			console.log(`\nOverpass API fallback: ${totalOverpass} stations in ${overpassCountries.length} countries`);
+			let osmFound = 0, osmMissed = 0;
+			for (const [iso, stations] of overpassCountries) {
+				try {
+					const osmStations = await queryOverpass(iso);
+					const usedOsm = new Set();
+					for (const [code, s] of stations) {
+						const idx = osmStations.findIndex((osm, i) => !usedOsm.has(i) && osm.labels.some(label => namesMatchStrict(label, s.name)));
+						if (idx >= 0) {
+							cache[code] = { lat: osmStations[idx].lat, lon: osmStations[idx].lon };
+							usedOsm.add(idx);
+							osmFound++;
+						} else {
+							osmMissed++;
+						}
+					}
+					process.stdout.write(`\r  Overpass: ${osmFound} found, ${osmMissed} missed (${iso}: ${stations.length})`);
+					await safeWrite(CACHE_FILE, JSON.stringify(cache, null, 2));
+				} catch (e) {
+					console.error(`\n  Overpass ${iso} failed: ${e.message}`);
+					osmMissed += stations.length;
+				}
+				await sleep(OVERPASS_DELAY);
+			}
+			console.log(`\n  Done: ${osmFound} found, ${osmMissed} missed. Cache: ${Object.keys(cache).length}`);
 			await safeWrite(CACHE_FILE, JSON.stringify(cache, null, 2));
 		}
 

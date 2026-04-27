@@ -83,7 +83,7 @@ Output: `crawler/discovered-stations.json` — merged into the main dataset duri
 
 ### Geocoding (`geocode/`)
 
-Looks up geographic coordinates (latitude/longitude) for stations via [Wikidata](https://www.wikidata.org/) SPARQL queries — first by UIC station code ([P722](https://www.wikidata.org/wiki/Property:P722)), then by station name + country as fallback, with multi-language label matching. Generates an interactive map using [Leaflet](https://leafletjs.com/).
+Looks up geographic coordinates (latitude/longitude) for stations via [Wikidata](https://www.wikidata.org/) SPARQL queries — first by UIC station code ([P722](https://www.wikidata.org/wiki/Property:P722)), then by station name + country as fallback, with multi-language label matching. Stations not found in Wikidata are resolved via the [Overpass API](https://overpass-api.de/) (OpenStreetMap), querying all railway nodes per country and matching by name. Generates an interactive map using [Leaflet](https://leafletjs.com/).
 
 ```shell
 # Full geocode (only queries stations not already in cache)
