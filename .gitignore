@@ -9,6 +9,7 @@ data.ndjson
 data.json
 
 .idea
+.kiro
 
 # geocode artifacts (regenerable)
 geocode/*

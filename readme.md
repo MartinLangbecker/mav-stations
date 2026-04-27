@@ -60,8 +60,23 @@ for await (const station of readStations()) {
 BFS (breadth-first search) crawler that follows trains from seed stations through the MÁV timetable API, discovering stations not in the official station list. Starting from a set of seed stations, it queries departures, follows each train to its stops, and repeats for newly found stations up to a configurable depth.
 
 ```shell
-# Discover stations reachable from Berlin Hbf, depth 2, max 10 trains per station
-npm run discover -- --seed 008011160 --max-depth 2 --max-trains 10 --delay 500
+npm run discover -- [options]
+```
+
+| Option | Default | Description |
+|--------|---------|-------------|
+| `--seed <codes>` | `008016321,008069685,…` | Comma-separated station codes to start from |
+| `--max-depth <n>` | `3` | BFS depth limit |
+| `--max-trains <n>` | `5` | Max trains to follow per station |
+| `--delay <ms>` | `500` | Delay between API calls in ms |
+| `--date <iso>` | `2026-06-15T08:00:00+02:00` | Travel date for timetable queries |
+| `--output <path>` | `crawler/discovered-stations.json` | Output file path |
+| `--seen-trains <path>` | `crawler/seen-trains.json` | Seen trains file (for incremental crawling) |
+| `--help` | | Show help message |
+
+```shell
+# Discover stations reachable from German hubs, depth 4, 15 trains per station
+npm run discover -- --seed 008013240,008014350 --max-depth 4 --max-trains 15 --delay 500
 ```
 
 Output: `crawler/discovered-stations.json` — merged into the main dataset during `npm run build`.

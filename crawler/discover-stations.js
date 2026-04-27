@@ -18,7 +18,39 @@ const flag = (name, fallback) => {
   return i >= 0 ? args[i + 1] : fallback;
 };
 
-const DELAY_MS = parseInt(flag('delay', '2000'));       // ms between API calls
+if (args.includes('--help') || args.includes('-h')) {
+  console.log(`Usage: node discover-stations.js [options]
+
+BFS crawler that discovers MAV stations not in the official station list
+by following trains through the timetable API.
+
+Options:
+  --seed <codes>        Comma-separated station codes to start from
+                        Default: 008016321,008069685,008103217,008011065
+  --max-depth <n>       BFS depth limit (default: 3)
+  --max-trains <n>      Max trains to follow per station (default: 5)
+  --delay <ms>          Delay between API calls in ms (default: 500)
+  --date <iso>          Travel date for timetable queries
+                        Default: 2026-06-15T08:00:00+02:00
+  --output <path>       Output file path (default: crawler/discovered-stations.json)
+  --seen-trains <path>  Seen trains file path (default: crawler/seen-trains.json)
+  --help, -h            Show this help message
+
+Examples:
+  # Discover from German hubs, depth 4, 15 trains per station
+  npm run discover -- --seed 008013240,008014350 --max-depth 4 --max-trains 15 --delay 500
+
+  # Quick test run from Budapest
+  npm run discover -- --seed 005510009 --max-depth 1 --max-trains 3
+
+Station codes are 9 digits: 00 + UIC country code (2 digits) + station number (5 digits).
+Major hub stations (e.g. Budapest Keleti, Wien Hbf) are good seeds.
+Meta-stations (ALL CAPS with *) return 0 timetable results and cannot be used as seeds.
+Seen trains are persisted in seen-trains.json for incremental crawling.`);
+  process.exit(0);
+}
+
+const DELAY_MS = parseInt(flag('delay', '500'));       // ms between API calls
 const MAX_TRAINS = parseInt(flag('max-trains', '5'));    // trains to follow per station
 const MAX_DEPTH = parseInt(flag('max-depth', '3'));      // BFS depth
 const SEEDS = flag('seed', '008016321,008069685,008103217,008011065').split(',');
