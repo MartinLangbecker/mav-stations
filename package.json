@@ -1,7 +1,7 @@
 {
   "name": "mav-stations",
   "description": "A list of MAV stations.",
-  "version": "0.4.4",
+  "version": "0.4.5",
   "type": "module",
   "main": "index.js",
   "browser": "browser.js",
