@@ -9,7 +9,7 @@
  */
 
 import { randomUUID } from 'crypto';
-import { readFile, writeFile, rename } from 'fs/promises';
+import { readFile, rename, writeFile } from 'fs/promises';
 
 // --- CLI args ---
 const args = process.argv.slice(2);
@@ -21,17 +21,19 @@ const flag = (name, fallback) => {
 if (args.includes('--help') || args.includes('-h')) {
   console.log(`Usage: node discover-stations.js [options]
 
-BFS crawler that discovers MAV stations not in the official station list
+BFS crawler that discovers MAV stations not in the known station list
 by following trains through the timetable API.
+Compares against data.ndjson (run "npm run build" first to include previous discoveries).
 
 Options:
   --seed <codes>        Comma-separated station codes to start from
                         Default: 008016321,008069685,008103217,008011065
-  --max-depth <n>       BFS depth limit (default: 3)
+  --max-depth <n>       BFS depth limit (default: 3, use "infinite" to keep
+                        going while new stations are found)
   --max-trains <n>      Max trains to follow per station (default: 5)
-  --delay <ms>          Delay between API calls in ms (default: 500)
+  --delay <ms>          Delay between API calls in ms (default: 250)
   --date <iso>          Travel date for timetable queries
-                        Default: 2026-06-15T08:00:00+02:00
+                        Default: current timestamp
   --output <path>       Output file path (default: crawler/discovered-stations.json)
   --seen-trains <path>  Seen trains file path (default: crawler/seen-trains.json)
   --help, -h            Show this help message
@@ -50,38 +52,63 @@ Seen trains are persisted in seen-trains.json for incremental crawling.`);
   process.exit(0);
 }
 
-const DELAY_MS = parseInt(flag('delay', '500'));       // ms between API calls
-const MAX_TRAINS = parseInt(flag('max-trains', '5'));    // trains to follow per station
-const MAX_DEPTH = parseInt(flag('max-depth', '3'));      // BFS depth
-const SEEDS = flag('seed', '008016321,008069685,008103217,008011065').split(',');
-const __dirname = new URL('.', import.meta.url).pathname.replace(/^\/([A-Z]:)/, '$1');
+const DELAY_MS = parseInt(flag('delay', '250')); // ms between API calls
+const MAX_TRAINS = parseInt(flag('max-trains', '5')); // trains to follow per station
+const MAX_DEPTH =
+  flag('max-depth', '3') === 'infinite'
+    ? Infinity
+    : parseInt(flag('max-depth', '3'));
+const SEEDS = flag('seed', '008016321,008069685,008103217,008011065').split(
+  ',',
+);
+const __dirname = new URL('.', import.meta.url).pathname.replace(
+  /^\/([A-Z]:)/,
+  '$1',
+);
 const OUTPUT = flag('output', __dirname + 'discovered-stations.json');
 const SEEN_TRAINS_FILE = flag('seen-trains', __dirname + 'seen-trains.json');
-const TRAVEL_DATE = flag('date', '2026-06-15T08:00:00+02:00');
+const TRAVEL_DATE = flag('date', new Date().toISOString());
 
 // --- API client ---
 const BASE = 'https://jegy-a.mav.hu/IK_API_PROD/api';
 const sessionId = randomUUID();
-const headers = { 'Content-Type': 'application/json', UserSessionId: sessionId, Language: 'en' };
+const headers = {
+  'Content-Type': 'application/json',
+  UserSessionId: sessionId,
+  Language: 'en',
+};
 
 let requestCount = 0;
 const startTime = Date.now();
 
-const safeWrite = async (p, data) => { await writeFile(p + '.tmp', data); await rename(p + '.tmp', p); };
+const safeWrite = async (p, data) => {
+  await writeFile(p + '.tmp', data);
+  await rename(p + '.tmp', p);
+};
 
-const sleep = (ms) => new Promise(r => setTimeout(r, ms));
-const fmt = ms => {
-  const s = Math.floor(ms / 1000), m = Math.floor(s / 60), h = Math.floor(m / 60);
-  return h > 0 ? `${h}h${m % 60}m${s % 60}s` : m > 0 ? `${m}m${s % 60}s` : `${s}s`;
+const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+const fmt = (ms) => {
+  const s = Math.floor(ms / 1000),
+    m = Math.floor(s / 60),
+    h = Math.floor(m / 60);
+  return h > 0
+    ? `${h}h${m % 60}m${s % 60}s`
+    : m > 0
+      ? `${m}m${s % 60}s`
+      : `${s}s`;
 };
 const elapsed = () => fmt(Date.now() - startTime);
-const rps = () => requestCount > 0 ? (requestCount / ((Date.now() - startTime) / 1000)).toFixed(1) : '0';
+const rps = () =>
+  requestCount > 0
+    ? (requestCount / ((Date.now() - startTime) / 1000)).toFixed(1)
+    : '0';
 
 const apiCall = async (path, body) => {
   await sleep(DELAY_MS);
   requestCount++;
   const res = await fetch(`${BASE}${path}`, {
-    method: 'POST', headers,
+    method: 'POST',
+    headers,
     body: JSON.stringify(body),
     signal: AbortSignal.timeout(30000),
   });
@@ -89,16 +116,27 @@ const apiCall = async (path, body) => {
   return res.json();
 };
 
-// --- Fetch official station list ---
-const fetchStationList = async () => {
-  console.log('Fetching GetStationList...');
-  const data = await apiCall('/OfferRequestApi/GetStationList', {});
-  if (!data?.stations) {
-    console.log('  Warning: station list unavailable, continuing without it');
+// --- Load known stations from data.ndjson ---
+const loadKnownStations = async () => {
+  const projectRoot = new URL('..', import.meta.url).pathname.replace(
+    /^\/([A-Z]:)/,
+    '$1',
+  );
+  const ndjsonPath = projectRoot + 'data.ndjson';
+  let lines;
+  try {
+    const text = await readFile(ndjsonPath, 'utf-8');
+    lines = text.split('\n').filter(Boolean);
+  } catch {
+    console.log('  Warning: data.ndjson not found, run "npm run build" first');
     return new Set();
   }
-  const codes = new Set(data.stations.map(s => s.code));
-  console.log(`  Official list: ${codes.size} stations`);
+  const codes = new Set();
+  for (const line of lines) {
+    const s = JSON.parse(line);
+    if (s.id) codes.add(s.id);
+  }
+  console.log(`Known stations: ${codes.size} (from data.ndjson)`);
   return codes;
 };
 
@@ -129,9 +167,9 @@ const getTrainStops = async (trainId, travelDate) => {
 
 // --- BFS crawler ---
 const crawl = async (officialCodes) => {
-  const discovered = new Map();  // code -> station info
-  const visited = new Set();     // station codes we've fetched departures for
-  let queue = [...SEEDS];        // BFS queue of station codes
+  const discovered = new Map(); // code -> station info
+  const visited = new Set(); // station codes we've fetched departures for
+  let queue = [...SEEDS]; // BFS queue of station codes
   let depth = 0;
 
   // Load persisted seen train numbers (stable across days, unlike trainId)
@@ -146,14 +184,19 @@ const crawl = async (officialCodes) => {
   while (queue.length > 0 && depth < MAX_DEPTH) {
     depth++;
     const nextQueue = [];
-    console.log(`\n--- Depth ${depth}, ${queue.length} stations to explore ---`);
+    let discoveredThisDepth = 0;
+    console.log(
+      `\n--- Depth ${depth}, ${queue.length} stations to explore ---`,
+    );
 
     for (const stationCode of queue) {
       if (visited.has(stationCode)) continue;
       visited.add(stationCode);
 
       const stationName = discovered.get(stationCode)?.name ?? stationCode;
-      console.log(`\n[${visited.size}] Station: ${stationName} (${stationCode}) [${elapsed()}, ${requestCount} reqs, ${rps()} req/s]`);
+      console.log(
+        `\n[${visited.size}] Station: ${stationName} (${stationCode}) [${elapsed()}, ${requestCount} reqs, ${rps()} req/s]`,
+      );
 
       let trains;
       try {
@@ -165,16 +208,25 @@ const crawl = async (officialCodes) => {
       console.log(`  ${trains.length} trains found`);
 
       // Pick unseen trains (by train number, stable across days)
+      // Prefix with station country to avoid cross-country duplicates
+      // (e.g. "IC 123" can exist in both DE and HU)
+      const countryPrefix = stationCode.slice(2, 4) + '-';
       const unseenTrains = trains
-        .filter(t => t.fullName && !seenTrains.has(t.fullName))
-        .filter((t, i, arr) => arr.findIndex(u => u.fullName === t.fullName) === i)
+        .filter(
+          (t) => t.fullName && !seenTrains.has(countryPrefix + t.fullName),
+        )
+        .filter(
+          (t, i, arr) => arr.findIndex((u) => u.fullName === t.fullName) === i,
+        )
         .slice(0, MAX_TRAINS);
       console.log(`  ${trains.length} trains, ${unseenTrains.length} unseen`);
 
       for (const train of unseenTrains) {
-        seenTrains.add(train.fullName);
+        seenTrains.add(countryPrefix + train.fullName);
         const trainId = parseInt(train.trainId);
-        console.log(`  Train ${train.fullName}: ${train.startStation?.name} → ${train.endStation?.name}`);
+        console.log(
+          `  Train ${train.fullName}: ${train.startStation?.name} → ${train.endStation?.name}`,
+        );
 
         let stops;
         try {
@@ -185,24 +237,32 @@ const crawl = async (officialCodes) => {
         }
 
         for (const stop of stops) {
-          const s = stop.station;
-          if (!s?.code) continue;
+          const code = stop.station?.code;
+          if (!code) continue;
+          if (officialCodes.has(code)) continue;
 
-          if (!officialCodes.has(s.code) && !discovered.has(s.code)) {
-            discovered.set(s.code, s);
-            console.log(`    ★ ${s.code} "${s.name}" (${s.coutryIso})`);
+          if (!discovered.has(code)) {
+            discoveredThisDepth++;
+            discovered.set(code, stop.station);
+            console.log(
+              `    ★ ${code} "${stop.station.name}" (${stop.station.coutryIso})`,
+            );
           }
-
-          // Queue newly discovered stations for next BFS depth
-          if (!visited.has(s.code) && !officialCodes.has(s.code)) {
-            nextQueue.push(s.code);
-          }
+          if (!visited.has(code)) nextQueue.push(code);
         }
       }
     }
 
-    queue = [...new Set(nextQueue)];
-    console.log(`\nDepth ${depth} complete. Discovered so far: ${discovered.size}. Next queue: ${queue.length}. [${elapsed()}, ${requestCount} reqs]`);
+    queue = [...new Set(nextQueue)].filter((c) => !visited.has(c));
+    console.log(
+      `\nDepth ${depth} complete. Discovered so far: ${discovered.size}. Next queue: ${queue.length}. [${elapsed()}, ${requestCount} reqs]`,
+    );
+
+    // In infinite mode, stop if this depth found nothing new
+    if (MAX_DEPTH === Infinity && discoveredThisDepth === 0) {
+      console.log(`\nNo new discoveries at depth ${depth}, stopping.`);
+      break;
+    }
   }
 
   return { discovered, seenTrains };
@@ -210,14 +270,20 @@ const crawl = async (officialCodes) => {
 
 // --- Main ---
 const main = async () => {
-  console.log(`Config: delay=${DELAY_MS}ms, max-trains=${MAX_TRAINS}/station, max-depth=${MAX_DEPTH}`);
+  console.log(
+    `Config: delay=${DELAY_MS}ms, max-trains=${MAX_TRAINS}/station, max-depth=${MAX_DEPTH === Infinity ? '∞' : MAX_DEPTH}`,
+  );
   console.log(`Seeds: ${SEEDS.join(', ')}`);
-  console.log(`Started: ${new Date().toLocaleString('de-DE', {day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit',second:'2-digit'})}\n`);
+  console.log(
+    `Started: ${new Date().toLocaleString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit', second: '2-digit' })}\n`,
+  );
 
-  const officialCodes = await fetchStationList();
+  const officialCodes = await loadKnownStations();
   const { discovered, seenTrains } = await crawl(officialCodes);
 
-  console.log(`\n=== RESULTS: ${discovered.size} hidden stations (${requestCount} API requests, ${elapsed()}) ===\n`);
+  console.log(
+    `\n=== RESULTS: ${discovered.size} hidden stations (${requestCount} API requests, ${elapsed()}) ===\n`,
+  );
 
   // Group by country
   const byCountry = {};
@@ -227,7 +293,9 @@ const main = async () => {
   for (const [iso, stations] of Object.entries(byCountry).sort()) {
     console.log(`${iso} (${stations.length}):`);
     for (const s of stations.sort((a, b) => a.name.localeCompare(b.name))) {
-      console.log(`  ${s.code} ${s.name}${s.canUseForOfferRequest ? '' : ' [no offers]'}`);
+      console.log(
+        `  ${s.code} ${s.name}${s.canUseForOfferRequest ? '' : ' [no offers]'}`,
+      );
     }
   }
 
@@ -235,15 +303,24 @@ const main = async () => {
   let existing = [];
   try {
     existing = JSON.parse(await readFile(OUTPUT, 'utf-8'));
-  } catch { /* first run */ }
-  const merged = new Map(existing.map(s => [s.code, s]));
+  } catch {
+    /* first run */
+  }
+  const merged = new Map(existing.map((s) => [s.code, s]));
   for (const s of discovered.values()) merged.set(s.code, s);
 
-  const output = [...merged.values()].sort((a, b) => a.code.localeCompare(b.code));
+  const output = [...merged.values()].sort((a, b) =>
+    a.code.localeCompare(b.code),
+  );
   await safeWrite(OUTPUT, JSON.stringify(output, null, 2));
   await safeWrite(SEEN_TRAINS_FILE, JSON.stringify([...seenTrains].sort()));
   console.log(`\nSaved ${output.length} stations to ${OUTPUT}`);
-  console.log(`Saved ${seenTrains.size} seen train numbers to ${SEEN_TRAINS_FILE}`);
+  console.log(
+    `Saved ${seenTrains.size} seen train numbers to ${SEEN_TRAINS_FILE}`,
+  );
 };
 
-main().catch(e => { console.error(e); process.exit(1); });
+main().catch((e) => {
+  console.error(e);
+  process.exit(1);
+});

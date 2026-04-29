@@ -20,7 +20,9 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 const resolve = (...p) => join(__dirname, ...p);
 
 const CACHE_FILE = resolve('wikidata-geocode-cache.json');
-const MAP_FILE = resolve('..', 'european-stations-map.html');
+const MAP_FILE = resolve('..', 'index.html');
+const TRAINLINE_CSV_URL = 'https://raw.githubusercontent.com/trainline-eu/stations/master/stations.csv';
+
 const BATCH_SIZE = 200;
 const BATCH_DELAY = 1500; // ms between batches (be nice to Wikidata)
 
@@ -221,6 +223,16 @@ const queryByCountry = async (countryQid) => {
 const OVERPASS_COUNTRIES = new Set(['PL','HU','RS','RO','SI','SK','HR','DE','AT','UA','FR','CZ','IT','NL','BE','CH','DK','BG','ME','MD','LT','GB','LU']);
 const OVERPASS_DELAY = 3000;
 
+// UIC prefix (digits 3-4 of 9-digit code) -> ISO country
+const UIC_PREFIX_TO_ISO = {
+	'55': 'HU', '81': 'AT', '80': 'DE', '54': 'CZ', '56': 'SK', '51': 'PL',
+	'53': 'RO', '72': 'RS', '78': 'HR', '79': 'SI', '85': 'CH', '83': 'IT',
+	'84': 'NL', '88': 'BE', '86': 'DK', '82': 'LU', '22': 'UA', '87': 'FR',
+	'23': 'MD', '24': 'LT', '62': 'ME', '70': 'GB', '52': 'BG',
+};
+const uicCountry = (code) => UIC_PREFIX_TO_ISO[code.slice(2, 4)] || null;
+
+
 const queryOverpass = async (countryIso) => {
 	const query = `[out:json];area["ISO3166-1"="${countryIso}"]->.c;node["railway"~"station|halt"](area.c);out;`;
 	for (let attempt = 0; attempt < 3; attempt++) {
@@ -274,7 +286,7 @@ const generateMap = (stations) => {
 <script>
 const map = L.map('map').setView([48.5, 13], 5);
 L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{
-  attribution:'© OpenStreetMap',maxZoom:18
+  attribution:'© OpenStreetMap',maxZoom:18,referrerPolicy:'no-referrer-when-downgrade'
 }).addTo(map);
 
 function dot(color,r){return{radius:r||4,fillColor:color,color:'#333',weight:0.5,opacity:0.8,fillOpacity:0.7}}
@@ -351,7 +363,7 @@ const main = async () => {
 					for (const [uic, data] of Object.entries(results)) {
 						const origCode = codeMap[uic];
 						const station = allStations.get(origCode);
-						if (station && (data.wdLabels.some(label => namesMatch(label, station.name)) || overrides[origCode])) {
+						if (station && (data.wdLabels.some(label => namesMatch(label, station.name)) || overrides[origCode] || station.country === uicCountry(origCode))) {
 							cache[origCode] = { lat: data.lat, lon: data.lon };
 							found++;
 						} else {
@@ -381,6 +393,45 @@ const main = async () => {
 			await safeWrite(CACHE_FILE, JSON.stringify(cache, null, 2));
 		}
 
+
+		// Trainline CSV UIC lookup for remaining misses (fast, no name matching)
+		const stillMissing = [...allStations.entries()]
+			.filter(([code]) => !cache[code] && !allStations.get(code).name.includes('*'))
+			.map(([code]) => code);
+		if (stillMissing.length > 0) {
+			console.log(`\nTrainline UIC lookup: ${stillMissing.length} stations`);
+			try {
+				const tlRes = await fetch(TRAINLINE_CSV_URL, { signal: AbortSignal.timeout(30000) });
+				if (tlRes.ok) {
+					const text = await tlRes.text();
+					const lines = text.split('\n');
+					const header = lines[0].split(';');
+					const uicIdx = header.indexOf('uic');
+					const latIdx = header.indexOf('latitude');
+					const lonIdx = header.indexOf('longitude');
+					const trainlineByUic = new Map();
+					for (let i = 1; i < lines.length; i++) {
+						const cols = lines[i].split(';');
+						const uic = cols[uicIdx];
+						const lat = parseFloat(cols[latIdx]);
+						const lon = parseFloat(cols[lonIdx]);
+						if (uic && !isNaN(lat) && !isNaN(lon)) trainlineByUic.set(uic, { lat, lon });
+					}
+					let tlFound = 0;
+					for (const code of stillMissing) {
+						const uic7 = code.replace(/^00/, '');
+						const tl = trainlineByUic.get(uic7);
+						if (tl) { cache[code] = { lat: tl.lat, lon: tl.lon }; tlFound++; }
+					}
+					console.log(`  Trainline: ${tlFound} found (${trainlineByUic.size} stations in CSV)`);
+					if (tlFound > 0) await safeWrite(CACHE_FILE, JSON.stringify(cache, null, 2));
+				}
+			} catch (e) {
+				console.error(`  Trainline failed: ${e.message}`);
+			}
+		}
+
+
 		// Wikidata name+country fallback for remaining misses
 		const stillMissingByCountry = {};
 		for (const [code, s] of allStations) {
@@ -389,7 +440,7 @@ const main = async () => {
 			}
 		}
 		const countriesToQuery = Object.entries(stillMissingByCountry)
-			.filter(([iso]) => ISO_TO_QID[iso])
+			.filter(([iso, arr]) => ISO_TO_QID[iso] && arr.length >= 3)
 			.sort((a, b) => b[1].length - a[1].length);
 		const totalNameMissing = countriesToQuery.reduce((s, [, arr]) => s + arr.length, 0);
 

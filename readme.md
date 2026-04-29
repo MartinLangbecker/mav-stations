@@ -7,7 +7,7 @@ A **collection of all stations of [Magyar Államvasutak](https://jegy.mav.hu/) (
 
 ## Coverage
 
-**12,000+ rail stations** across **23 countries**. The [interactive station map](european-stations-map.html) shows all geocoded stations, color-coded by source (official MAV list vs. discovered via timetable crawl).
+**14,500+ rail stations** across **24 countries**. The [interactive station map](https://martinlangbecker.github.io/mav-stations/) shows all geocoded stations, color-coded by source (official MAV list vs. discovered via timetable crawl).
 
 > **Note:** Station discovery is an ongoing process. The dataset grows with each crawl and may not yet cover all stations reachable through the MÁV timetable, particularly in countries far from Hungary.
 
@@ -57,7 +57,7 @@ for await (const station of readStations()) {
 
 ### Station Discovery (`crawler/`)
 
-BFS (breadth-first search) crawler that follows trains from seed stations through the MÁV timetable API, discovering stations not in the official station list. Starting from a set of seed stations, it queries departures, follows each train to its stops, and repeats for newly found stations up to a configurable depth.
+BFS (breadth-first search) crawler that follows trains from seed stations through the MÁV timetable API, discovering stations not already in the dataset. Compares against `data.ndjson` (which includes both official and previously discovered stations), so each crawl only finds genuinely new stations. Run `npm run build` before crawling to ensure the comparison base is up to date.
 
 ```shell
 npm run discover -- [options]
@@ -66,10 +66,10 @@ npm run discover -- [options]
 | Option | Default | Description |
 |--------|---------|-------------|
 | `--seed <codes>` | `008016321,008069685,…` | Comma-separated station codes to start from |
-| `--max-depth <n>` | `3` | BFS depth limit |
+| `--max-depth <n>` | `3` | BFS depth limit (use `infinite` to keep going while new stations are found) |
 | `--max-trains <n>` | `5` | Max trains to follow per station |
-| `--delay <ms>` | `500` | Delay between API calls in ms |
-| `--date <iso>` | `2026-06-15T08:00:00+02:00` | Travel date for timetable queries |
+| `--delay <ms>` | `250` | Delay between API calls in ms |
+| `--date <iso>` | current timestamp | Travel date for timetable queries |
 | `--output <path>` | `crawler/discovered-stations.json` | Output file path |
 | `--seen-trains <path>` | `crawler/seen-trains.json` | Seen trains file (for incremental crawling) |
 | `--help` | | Show help message |
@@ -77,13 +77,17 @@ npm run discover -- [options]
 ```shell
 # Discover stations reachable from German hubs, depth 4, 15 trains per station
 npm run discover -- --seed 008013240,008014350 --max-depth 4 --max-trains 15 --delay 500
+
+# Keep crawling until no new stations are found
+npm run discover -- --seed 008503000,005454300,008101003 --max-depth infinite --max-trains 10
+
 ```
 
 Output: `crawler/discovered-stations.json` — merged into the main dataset during `npm run build`.
 
 ### Geocoding (`geocode/`)
 
-Looks up geographic coordinates (latitude/longitude) for stations via [Wikidata](https://www.wikidata.org/) SPARQL queries — first by UIC station code ([P722](https://www.wikidata.org/wiki/Property:P722)), then by station name + country as fallback, with multi-language label matching. Stations not found in Wikidata are resolved via the [Overpass API](https://overpass-api.de/) (OpenStreetMap), querying all railway nodes per country and matching by name. Generates an interactive map using [Leaflet](https://leafletjs.com/).
+Looks up geographic coordinates (latitude/longitude) for stations via [Wikidata](https://www.wikidata.org/) SPARQL queries — first by UIC station code ([P722](https://www.wikidata.org/wiki/Property:P722)), then via the [Trainline stations dataset](https://github.com/trainline-eu/stations) (UIC match), then by station name + country as fallback, with multi-language label matching. Stations not found in Wikidata are resolved via the [Overpass API](https://overpass-api.de/) (OpenStreetMap), querying all railway nodes per country and matching by name. Generates an interactive map using [Leaflet](https://leafletjs.com/).
 
 ```shell
 # Full geocode (only queries stations not already in cache)
