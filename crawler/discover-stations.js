@@ -117,11 +117,24 @@ const apiCall = async (path, body) => {
 };
 
 // --- Load known stations from data.ndjson ---
+// Excludes brute-force stations so they can be "upgraded" to crawled
 const loadKnownStations = async () => {
   const projectRoot = new URL('..', import.meta.url).pathname.replace(
     /^\/([A-Z]:)/,
     '$1',
   );
+
+  // Load brute-force codes to exclude
+  const bruteForceCodes = new Set();
+  try {
+    const disc = JSON.parse(
+      await readFile(projectRoot + 'crawler/discovered-stations.json', 'utf-8'),
+    );
+    for (const s of disc) {
+      if (s.source === 'brute-force') bruteForceCodes.add(s.code);
+    }
+  } catch {}
+
   const ndjsonPath = projectRoot + 'data.ndjson';
   let lines;
   try {
@@ -134,9 +147,11 @@ const loadKnownStations = async () => {
   const codes = new Set();
   for (const line of lines) {
     const s = JSON.parse(line);
-    if (s.id) codes.add(s.id);
+    if (s.id && !bruteForceCodes.has(s.id)) codes.add(s.id);
   }
-  console.log(`Known stations: ${codes.size} (from data.ndjson)`);
+  console.log(
+    `Known stations: ${codes.size} (from data.ndjson, ${bruteForceCodes.size} brute-force excluded)`,
+  );
   return codes;
 };
 
@@ -243,6 +258,7 @@ const crawl = async (officialCodes) => {
 
           if (!discovered.has(code)) {
             discoveredThisDepth++;
+            stop.station.source = 'crawled';
             discovered.set(code, stop.station);
             console.log(
               `    ★ ${code} "${stop.station.name}" (${stop.station.coutryIso})`,

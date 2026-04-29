@@ -56,10 +56,11 @@ const loadStations = async () => {
 	const disc = JSON.parse(await readFile(resolve('..', 'crawler', 'discovered-stations.json'), 'utf-8'));
 	const discoveredCodes = new Set(disc.map(s => s.code));
 	for (const s of disc) {
+		const src = s.source === 'brute-force' ? 'brute-force' : 'discovered';
 		if (!all.has(s.code)) {
-			all.set(s.code, { name: s.name, code: s.code, source: 'discovered', country: s.coutryIso });
+			all.set(s.code, { name: s.name, code: s.code, source: src, country: s.coutryIso });
 		} else {
-			all.get(s.code).source = 'discovered';
+			all.get(s.code).source = src;
 		}
 	}
 
@@ -260,6 +261,7 @@ const queryOverpass = async (countryIso) => {
 const generateMap = (stations) => {
 	const mav = stations.filter(s => s.source === 'mav');
 	const disc = stations.filter(s => s.source === 'discovered');
+	const brute = stations.filter(s => s.source === 'brute-force');
 
 	// Country stats
 	const byCountry = {};
@@ -293,7 +295,8 @@ function dot(color,r){return{radius:r||4,fillColor:color,color:'#333',weight:0.5
 
 const data = {
   mav: ${JSON.stringify(mav)},
-  discovered: ${JSON.stringify(disc)}
+  discovered: ${JSON.stringify(disc)},
+  brute: ${JSON.stringify(brute)}
 };
 
 const layers = {};
@@ -302,6 +305,9 @@ layers['mav-stations ('+data.mav.length+')'] = L.layerGroup(
 ).addTo(map);
 layers['discovered ('+data.discovered.length+')'] = L.layerGroup(
   data.discovered.map(s=>L.circleMarker([s.lat,s.lon],dot('#FF9800')).bindPopup('<b>'+s.name+'</b><br>'+s.code+' ('+s.country+')<br><i>discovered</i>'))
+).addTo(map);
+layers['brute-force ('+data.brute.length+')'] = L.layerGroup(
+  data.brute.map(s=>L.circleMarker([s.lat,s.lon],dot('#9C27B0')).bindPopup('<b>'+s.name+'</b><br>'+s.code+' ('+s.country+')<br><i>brute-force</i>'))
 ).addTo(map);
 
 L.control.layers(null, layers, {collapsed:false}).addTo(map);
@@ -312,6 +318,7 @@ legend.onAdd = function(){
   d.innerHTML='<b>European Station Coverage</b><br>'+
     '<i style="background:#2196F3"></i>mav-stations ('+data.mav.length+')<br>'+
     '<i style="background:#FF9800"></i>discovered ('+data.discovered.length+')<br>'+
+    '<i style="background:#9C27B0"></i>brute-force ('+data.brute.length+')<br>'+
     '<br>Total: ${stations.length} geocoded<br>'+
     '${countryStats}<br>'+
     'Generated: ${new Date().toISOString().slice(0, 16).replace('T', ' ')}';
@@ -522,7 +529,7 @@ const main = async () => {
 
 	// Apply manual overrides for accepted rejections
 	for (const [code, coords] of Object.entries(overrides)) {
-		if (!cache[code] && coords.lat != null) {
+		if (coords.lat != null) {
 			cache[code] = { lat: coords.lat, lon: coords.lon };
 		}
 	}

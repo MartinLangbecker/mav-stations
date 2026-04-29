@@ -20,6 +20,9 @@ geocode/*
 # crawler state (regenerable)
 crawler/*
 !crawler/discover-stations.js
+!crawler/brute-force.js
+!crawler/merge-brute-force.js
+!crawler/resolve-names.js
 !crawler/discovered-stations.json
 
 update-bookmarklet.js

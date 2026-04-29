@@ -7,7 +7,7 @@ A **collection of all stations of [Magyar Államvasutak](https://jegy.mav.hu/) (
 
 ## Coverage
 
-**14,500+ rail stations** across **24 countries**. The [interactive station map](https://martinlangbecker.github.io/mav-stations/) shows all geocoded stations, color-coded by source (official MAV list vs. discovered via timetable crawl).
+**36,400+ rail stations** across **27 countries**. The [interactive station map](https://martinlangbecker.github.io/mav-stations/) shows all geocoded stations, color-coded by source (official MAV list vs. discovered via timetable crawl or brute-force code scanning).
 
 > **Note:** Station discovery is an ongoing process. The dataset grows with each crawl and may not yet cover all stations reachable through the MÁV timetable, particularly in countries far from Hungary.
 
@@ -84,6 +84,25 @@ npm run discover -- --seed 008503000,005454300,008101003 --max-depth infinite --
 ```
 
 Output: `crawler/discovered-stations.json` — merged into the main dataset during `npm run build`.
+
+### Brute-Force Code Scanner (`crawler/`)
+
+Tests UIC station codes against the MAV StationInfo endpoint to find stations not discoverable via BFS crawling (e.g. stations with seasonal or no current service). Uses the [Trainline stations dataset](https://github.com/trainline-eu/stations) as a primary candidate source for efficiency.
+
+```shell
+# Test Trainline candidates for a country (UIC 80 = Germany)
+npm run brute-force -- --uic 80 --trainline --start 1 --end 0
+
+# Trainline candidates + range scan (NL has a narrow range)
+npm run brute-force -- --uic 84 --trainline --start 1 --end 800
+
+# Merge hits into discovered-stations.json
+node crawler/merge-brute-force.js
+```
+
+Discovered stations are tagged with `source: "brute-force"` or `source: "crawled"` to distinguish confirmed active stations from those that merely exist in the system.
+
+
 
 ### Geocoding (`geocode/`)
 
